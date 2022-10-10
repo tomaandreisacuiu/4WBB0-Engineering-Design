@@ -32,9 +32,11 @@ void loop()
 {
   humInside = dhtInside.readHumidity();
   tempInside = dhtInside.readTemperature();
+  float dewInside = (tempOutside - (100 - humOutside) / 5);
 
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
+  float dewOutside = (tempOutside - (100 - humOutside) / 5);
   //Print temp and humidity values to serial monitor
   Serial.println("Humidity: ");
   Serial.println(humInside);
