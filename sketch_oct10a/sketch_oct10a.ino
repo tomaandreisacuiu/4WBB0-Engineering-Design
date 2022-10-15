@@ -1,23 +1,24 @@
-#include <DHT.h>
+#include <DHT.h> // Library for DHT22 Temperature and Humidity Sensor
 
 //temp sensor
 #define DHTPIN 7     // what pin we're connected to
-#define DHTTYPE DHT22   // DHT 22  (AM2302)
+#define DHTTYPE DHT22   // DHT22 Temperature and Humidity Sensor
 DHT dhtInside(DHTPIN, DHTTYPE); //// Initialize DHT sensor for normal 16mhz Arduino
 #define DHTPIN1 3
 DHT dhtOutside(DHTPIN1, DHTTYPE);
 
-const int capteur_D = 4;
-const int capteur_A = A0;
+const int capteur_D = 4; // Rain Sensor Connection D0
+const int capteur_A = A0; // Rain Sensor Connection A0
 
 //temp sensor
-int chk;
-float humInside;  //Stores humidity value
-float tempInside; //Stores temperature value
-float humOutside;  //Stores humidity value
-float tempOutside; 
+float humInside;  // Humidity Inside the Room
+float tempInside; // Temperature Inside
+float humOutside;  // Humidity Outside
+float tempOutside;  // Temperature Outside
+float dewInside; // Dew-Point Inside
+float dewOutside;// Dew-Point Inside
 
-int val_analogique;
+int val_analogique; // Rain Sensor Analog Value
 
 void setup()
 {
@@ -30,13 +31,13 @@ void setup()
 
 void loop()
 {
-  humInside = dhtInside.readHumidity();
-  tempInside = dhtInside.readTemperature();
-  float dewInside = (tempOutside - (100 - humOutside) / 5);
+  humInside = dhtInside.readHumidity(); // read humidity from sensor
+  tempInside = dhtInside.readTemperature(); // read temperature from sensor
+  dewInside = (tempOutside - (100 - humOutside) / 5); // calculate dew point
 
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
-  float dewOutside = (tempOutside - (100 - humOutside) / 5);
+  dewOutside = (tempOutside - (100 - humOutside) / 5);
   //Print temp and humidity values to serial monitor
   Serial.println("Humidity: ");
   Serial.println(humInside);
@@ -48,34 +49,36 @@ void loop()
   Serial.println();
   delay(3000);
 
-  /*  
-  if(digitalRead(capteur_D) == LOW) 
-    {
-      Serial.println("Digital value : wet"); 
-      delay(10); 
-    }
+
+  // Rain Sensor:
+  if (digitalRead(capteur_D) == LOW)
+  {
+    Serial.println("Digital value : wet"); // Low Output Voltage = Rain
+    delay(10);
+  }
   else
-    {
-      Serial.println("Digital value : dry");
-      delay(10); 
-    }
-  val_analogique=analogRead(capteur_A); 
+  {
+    Serial.println("Digital value : dry"); // High Output Voltage = Dry
+    delay(10);
+  }
+  val_analogique = analogRead(capteur_A);
   Serial.print("Analog value : ");
-  Serial.println(val_analogique); 
+  Serial.println(val_analogique); // print analog rain sensor value for testing
   Serial.println("");
   delay(1000);
-  */
-  
-  float tempMin=18;
-  float tempMax=24;
-  int rainSensor=500;
-  if (rainSeonsor>300){
-    if((tempInside>=tempMin && tempInside<=tempMax) || (tempInside<tempMin && tempOutside>=tempMin) || (tempInside>tempMax && tempOutside<=tempMax))
-      if(dewOutside<16.7 && dewOutside<dewInside))
+
+
+  // Case Distinction
+  float tempMin = 18; // Default Minimum Healthy Room Temperature
+  float tempMax = 24; // Default Maximum Healthy Room Temperature
+  if (val_analogique > 300) // no rain {
+    if ((tempInside >= tempMin && tempInside <= tempMax) || (tempInside < tempMin && tempOutside >= tempMin) || (tempInside > tempMax && tempOutside <= tempMax))
+      if (dewOutside < 16.7 && dewOutside < dewInside))
       {
+        // dew point is acceptable
         //TODO: Open window
       }
-      else{
+      else {
         //TODO: Close window
       }
-}
+  }
