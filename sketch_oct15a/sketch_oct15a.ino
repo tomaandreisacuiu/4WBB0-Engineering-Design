@@ -77,7 +77,7 @@ void loop() {
 void OpenWindow() {
   if (isWindowOpen == false) {
     myservo.write(0);
-    delay(5000);
+    delay(3000);
     myservo.write(90);
     isWindowOpen = true;
   }
@@ -85,7 +85,7 @@ void OpenWindow() {
 }
 
 void CloseWindow() {
-  if (isWindowOpen == false) {
+  if (isWindowOpen == true) {
     myservo.write(180);
     delay(100);
     while (digitalRead(11) == LOW) {
@@ -105,10 +105,10 @@ void test()
 
   humInside = dhtInside.readHumidity();
   tempInside = dhtInside.readTemperature();
-
+float dewInside = (tempInside - (100 - humInside) / 5);
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
-
+float dewOutside = (tempOutside - (100 - humOutside) / 5);
   //Print temp and humidity values to serial monitor
   Serial.println("Humidity: ");
   Serial.println(humInside);
@@ -138,23 +138,22 @@ void test()
   Serial.println("");
   delay(1000);
 
+    
 
 
-
-  /*
+ 
     float tempMin=18;
     float tempMax=24;
-    int rainSensor=500;
-    if (rainSeonsor>300){
+    if(digitalRead(capteur_D) == HIGH) {
     if((tempInside>=tempMin && tempInside<=tempMax) || (tempInside<tempMin && tempOutside>=tempMin) || (tempInside>tempMax && tempOutside<=tempMax))
-      if(dewOutside<16.7 && dewOutside<dewInside))
+      if(dewOutside<16.7 && dewOutside<dewInside)
       {
-        //TODO: Open window
-      }
+        OpenWindow();
+      }}
       else{
-        //TODO: Close window
+        CloseWindow();
       }
-  */
+ 
 
 
 
