@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-
-=======
 #include <DHT.h>
 #include <Servo.h>
 
@@ -35,11 +32,16 @@ void setup()
   dhtInside.begin();
   dhtOutside.begin();
 
+  pinMode(8, INPUT);
+
   //myservo.write(pos); // put it before the attach() so it goes straight to that position
   //myservo.writeMicroseconds(1300); 
 
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
-  
+
+
+
+  /*
   myservo.write(45); 
   delay(4500);
   myservo.write(90);
@@ -47,7 +49,7 @@ void setup()
   myservo.write(135);
   delay(4500);
   myservo.write(90);
-
+  */
 }
 
 void loop()
@@ -58,7 +60,7 @@ void loop()
 
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
-  /*
+  
   //Print temp and humidity values to serial monitor
   Serial.println("Humidity: ");
   Serial.println(humInside);
@@ -69,9 +71,9 @@ void loop()
   Serial.println(tempOutside);
   Serial.println();
   delay(3000);
-  */
+  
 
-  /*  
+   
   if(digitalRead(capteur_D) == LOW) 
     {
       Serial.println("Digital value : wet"); 
@@ -87,7 +89,7 @@ void loop()
   Serial.println(val_analogique); 
   Serial.println("");
   delay(1000);
-  */
+  
 
   /*
   for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
@@ -99,10 +101,8 @@ void loop()
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
   }
-  */  
+  
 
-  //myservo.write(0);
-  //delay(3000);
   /*
   delay(3000);
   myservo.write(90);
@@ -111,9 +111,6 @@ void loop()
   delay(3000);
   */
 
-  //myservo.writeMicroseconds(1300); 
-  //myservo.detach();
-  //delay(10000);
 
   /*
   float tempMin=18;
@@ -130,7 +127,13 @@ void loop()
       }
      */
 
+   myservo.write(180);
    
-}
 
->>>>>>> 97d95ce4a4a955d00c546e311784321ff44ac028
+   if(digitalRead(8) == HIGH){
+      myservo.write(90);
+   }
+   
+
+}
+s
