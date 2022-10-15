@@ -20,14 +20,14 @@ int chk;
 float humInside;  //Stores humidity value
 float tempInside; //Stores temperature value
 float humOutside;  //Stores humidity value
-float tempOutside; 
+float tempOutside;
 
 int val_analogique;
 
-bool isSpinning=false; //servo is spinning
-bool isAutomatic=true; //automated process is running (Determined by a switch)
-bool isWindowOpen=false; //window is closed or open
-bool isSwitchOpen=false; // switch for closing and opening window manually
+bool isSpinning = false; //servo is spinning
+bool isAutomatic = true; //automated process is running (Determined by a switch)
+bool isWindowOpen = false; //window is closed or open
+bool isSwitchOpen = false; // switch for closing and opening window manually
 
 void setup()
 {
@@ -40,56 +40,63 @@ void setup()
   pinMode(11, INPUT);
 
   //myservo.write(pos); // put it before the attach() so it goes straight to that position
-  //myservo.writeMicroseconds(1300); 
+  //myservo.writeMicroseconds(1300);
 
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
 
 
   /*
-  myservo.write(45); 
-  delay(4500);
-  myservo.write(90);
-  delay(1000);
-  myservo.write(135);
-  delay(4500);
-  myservo.write(90);
+    myservo.write(45);
+    delay(4500);
+    myservo.write(90);
+    delay(1000);
+    myservo.write(135);
+    delay(4500);
+    myservo.write(90);
   */
 }
 
-void loop(){
+void loop() {
   //isAutomatic=digitalRead(); //TBD
-  isAutomatic=true;
-  if(isAutomatic==false){
+  isAutomatic = true;
+  if (isAutomatic == false) {
     //isSwitchOn=digitalRead(); //TBD
-   
-    if(isSwitchOpen==true&&isWindowOpen==false){
+
+    if (isSwitchOpen == true) {
       OpenWindow();
     }
-    else if(isSwitchOpen==false && isWindowOpen==true){
+    else if (isSwitchOpen == false) {
       CloseWindow();
-      isWindowOpen=false;
     }
   }
-  else{
+  else {
     test();
   }
 }
 
-void OpenWindow(){
-  myservo.write(0);
-  delay(5000);
-  myservo.write(90);
+void OpenWindow() {
+  if (isWindowOpen == false) {
+    myservo.write(0);
+    delay(5000);
+    myservo.write(90);
+    isWindowOpen = true;
+  }
+
 }
 
-void CloseWindow(){
-  myservo.write(180);
-  delay(100);
-  while(digitalRead(11)==LOW){
-    delay(10);
-  }            
+void CloseWindow() {
+  if (isWindowOpen == false) {
+    myservo.write(180);
+    delay(100);
+    while (digitalRead(11) == LOW) {
+      delay(10);
+    }
 
-  myservo.write(90);
-  
+    myservo.write(90);
+    isWindowOpen = false;
+
+
+  }
 }
 
 
@@ -101,7 +108,7 @@ void test()
 
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
-  
+
   //Print temp and humidity values to serial monitor
   Serial.println("Humidity: ");
   Serial.println(humInside);
@@ -112,52 +119,52 @@ void test()
   Serial.println(tempOutside);
   Serial.println();
   delay(3000);
-  
 
-   
-  if(digitalRead(capteur_D) == LOW) 
-    {
-      Serial.println("Digital value : wet"); 
-      delay(10); 
-    }
+
+
+  if (digitalRead(capteur_D) == LOW)
+  {
+    Serial.println("Digital value : wet");
+    delay(10);
+  }
   else
-    {
-      Serial.println("Digital value : dry");
-      delay(10); 
-    }
-  val_analogique=analogRead(capteur_A); 
+  {
+    Serial.println("Digital value : dry");
+    delay(10);
+  }
+  val_analogique = analogRead(capteur_A);
   Serial.print("Analog value : ");
-  Serial.println(val_analogique); 
+  Serial.println(val_analogique);
   Serial.println("");
   delay(1000);
-  
+
 
   /*
-  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+    for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
-  }
-  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+    }
+    for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
     myservo.write(pos);              // tell servo to go to position in variable 'pos'
     delay(15);                       // waits 15ms for the servo to reach the position
-  }
-  
+    }
 
-  /*
-  delay(3000);
-  myservo.write(90);
-  delay(3000);
-  myservo.write(180);
-  delay(3000);
+
+    /*
+    delay(3000);
+    myservo.write(90);
+    delay(3000);
+    myservo.write(180);
+    delay(3000);
   */
 
 
   /*
-  float tempMin=18;
-  float tempMax=24;
-  int rainSensor=500;
-  if (rainSeonsor>300){
+    float tempMin=18;
+    float tempMax=24;
+    int rainSensor=500;
+    if (rainSeonsor>300){
     if((tempInside>=tempMin && tempInside<=tempMax) || (tempInside<tempMin && tempOutside>=tempMin) || (tempInside>tempMax && tempOutside<=tempMax))
       if(dewOutside<16.7 && dewOutside<dewInside))
       {
@@ -166,14 +173,14 @@ void test()
       else{
         //TODO: Close window
       }
-     */
+  */
 
-   myservo.write(180);
-   
+  //myservo.write(180);
 
-   if(digitalRead(8) == HIGH){
-      myservo.write(90);
-   }
-   
+
+  if (digitalRead(8) == HIGH) {
+    myservo.write(90);
+  }
+
 
 }
