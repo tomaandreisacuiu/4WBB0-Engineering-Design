@@ -13,10 +13,15 @@ DHT dhtOutside(DHTPIN1, DHTTYPE);
 //define servo motor
 Servo myservo;
 
-const int rain_sensor_D = 4; // Rain Sensor Connection D0
+const int rain_sensor_D = 2; // Rain Sensor Connection D0
 const int rain_sensor_A = A0; // Rain Sensor Connection A0
-const int servo_D = 11; 
-
+const int servo_D = 9;
+const int magnet_D = 4;
+const int switch_auto_D = 5;
+const int switch_open_D = 6;
+const int switch_adjust_D=7;
+const int button_temp1 = 8;
+const int button_temp2 = 10;
 
 //Variables
 float humInside;  //Humidity Inside
@@ -27,17 +32,26 @@ float dewInside; // Dew Point Inside
 float dewOutside; // Dew Point Outside
 int rainAnalog; // Analog Value of Rain Sensor
 
+float prefferedTemp;
+
 bool isSpinning = false; //servo is spinning
 bool isAutomatic = true; //automated process is running (Determined by a switch)
 bool isWindowOpen = false; //window is closed or open
 bool isSwitchOpen = false; // switch for closing and opening window manually
-
+bool isAdjustTemp = false; // system is in "Adjust preferred temperature" Mode
 
 void setup()
 {
   pinMode(rain_sensor_D, INPUT); // Set rain sensor D0 pin as INPUT
   pinMode(rain_sensor_A, INPUT); // Set rain sensor A0 pin as INPUT
   pinMode(servo_D, INPUT); // Set servo pin as INPUT
+  pinMode(magnet_D, INPUT_PULLUP);
+  pinMode(switch_auto_D, INPUT_PULLUP);
+  pinMode(switch_open_D, INPUT_PULLUP);
+  pinMode(switch_adjust_D, INPUT_PULLUP);
+  pinMode(button_temp1, INPUT_PULLUP);
+  pinMode(button_temp2, INPUT_PULLUP);
+
 
   Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
   delay(500);//Delay to let system boot
@@ -48,25 +62,37 @@ void setup()
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
 
   delay(1000);//Wait before accessing Sensor
+  isAutomatic = false;
+  isSwitchOpen = false;
+  isWindowOpen = true;
+
 
 }
 
 void loop() {
-  //isAutomatic=digitalRead(); //TBD
-  if (isAutomatic == false) {
-    //isSwitchOn=digitalRead(); //TBD
 
-    if (isSwitchOpen == true) {
-      OpenWindow();
-    }
-    else if (isSwitchOpen == false) {
-      CloseWindow();
-    }
+  isAutomatic = (!digitalRead(switch_auto_D));
+  isAdjustTemp = (!digitalRead(switch_adjust_D));
+  if (isAdjustTemp == true) {
+    prefferedTemp=AdjustTemp(prefferedTemp);
   }
   else {
-    test();
+
+    if (isAutomatic == false) {
+      isSwitchOpen = digitalRead(switch_open_D);
+      if (isSwitchOpen == true) {
+        OpenWindow();
+      }
+      else if (isSwitchOpen == false) {
+        CloseWindow();
+      }
+    }
+    else {
+      test();
+    }
+    delay(1000); //Wait 3 seconds before accessing sensor again.
+
   }
-  delay(3000); //Wait 3 seconds before accessing sensor again.
 }
 
 void OpenWindow() {
@@ -83,11 +109,30 @@ void CloseWindow() {
   if (isWindowOpen == true) {
     myservo.write(180); // start rotating to close window full-speed
     delay(100);
-    while (digitalRead(11) == LOW);// wait until magnetic connectors are close
+
+    while (digitalRead(magnet_D) == HIGH) {
+      delay(100); // wait until magnetic connectors are close
+    }
+
     myservo.write(90); // stop rotating
     isWindowOpen = false;
 
 
+  }
+}
+
+float AdjustTemp(float temp){
+    isAdjustTemp = (!digitalRead(switch_adjust_D));
+  while(isAdjustTemp==true){
+    if(!digitalRead(button_temp1)==HIGH){
+      temp-=0.5;
+      delay(500);
+    }
+    if(!digitalRead(button_temp2)==HIGH){
+      temp+=0.5;
+      delay(500);
+    }
+    return temp;
   }
 }
 
