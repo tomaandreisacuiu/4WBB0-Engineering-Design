@@ -20,14 +20,17 @@ int chk;
 float humInside;  //Stores humidity value
 float tempInside; //Stores temperature value
 float humOutside;  //Stores humidity value
-float tempOutside;
+float tempOutside; // temperature outside
+float dewInside;
+float dewOutside;
 
-int val_analogique;
+int rainAnalog;
 
 bool isSpinning = false; //servo is spinning
 bool isAutomatic = true; //automated process is running (Determined by a switch)
 bool isWindowOpen = false; //window is closed or open
 bool isSwitchOpen = false; // switch for closing and opening window manually
+
 
 void setup()
 {
@@ -105,10 +108,11 @@ void test()
 
   humInside = dhtInside.readHumidity();
   tempInside = dhtInside.readTemperature();
-float dewInside = (tempInside - (100 - humInside) / 5);
+  dewInside = (tempInside - (100 - humInside) / 5);
+  
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
-float dewOutside = (tempOutside - (100 - humOutside) / 5);
+  dewOutside = (tempOutside - (100 - humOutside) / 5);
   //Print temp and humidity values to serial monitor
   Serial.println("Humidity: ");
   Serial.println(humInside);
@@ -132,28 +136,29 @@ float dewOutside = (tempOutside - (100 - humOutside) / 5);
     Serial.println("Digital value : dry");
     delay(10);
   }
-  val_analogique = analogRead(capteur_A);
+  rainAnalog = analogRead(capteur_A);
   Serial.print("Analog value : ");
-  Serial.println(val_analogique);
+  Serial.println(rainAnalog);
   Serial.println("");
   delay(1000);
 
-    
 
 
- 
-    float tempMin=18;
-    float tempMax=24;
-    if(digitalRead(capteur_D) == HIGH) {
-    if((tempInside>=tempMin && tempInside<=tempMax) || (tempInside<tempMin && tempOutside>=tempMin) || (tempInside>tempMax && tempOutside<=tempMax))
-      if(dewOutside<16.7 && dewOutside<dewInside)
+
+
+  float tempMin = 18;
+  float tempMax = 24;
+  if (digitalRead(capteur_D) == HIGH) {
+    if ((tempInside >= tempMin && tempInside <= tempMax) || (tempInside < tempMin && tempOutside >= tempMin) || (tempInside > tempMax && tempOutside <= tempMax))
+      if (dewOutside < 16.7 && dewOutside < dewInside)
       {
-        OpenWindow();
-      }}
-      else{
-        CloseWindow();
+        //OpenWindow();
       }
- 
+  }
+  else {
+    //CloseWindow();
+  }
+
 
 
 
