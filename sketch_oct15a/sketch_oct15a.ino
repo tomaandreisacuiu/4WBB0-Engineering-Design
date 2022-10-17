@@ -1,30 +1,31 @@
 #include <DHT.h>
 #include <Servo.h>
 
-//temp sensor
-#define DHTPIN 7     // what pin we're connected to
-#define DHTTYPE DHT22   // DHT 22  (AM2302)
-DHT dhtInside(DHTPIN, DHTTYPE); //// Initialize DHT sensor for normal 16mhz Arduino
+// set the DHT Pins
+#define DHTPIN 7
 #define DHTPIN1 3
+
+// initialize the library with the numbers of the interface pins
+#define DHTTYPE DHT22   // DHT 22  (AM2302)
+DHT dhtInside(DHTPIN, DHTTYPE); // Initialize DHT sensor for normal 16mhz Arduino
 DHT dhtOutside(DHTPIN1, DHTTYPE);
+
 //define servo motor
 Servo myservo;
 
-const int capteur_D = 4;
-const int capteur_A = A0;
+const int rain_sensor_D = 4; // Rain Sensor Connection D0
+const int rain_sensor_A = A0; // Rain Sensor Connection A0
+const int servo_D = 11;
 
-int pos = 0;    // variable to store the servo position
 
-//temp sensor
-int chk;
-float humInside;  //Stores humidity value
-float tempInside; //Stores temperature value
-float humOutside;  //Stores humidity value
-float tempOutside; // temperature outside
-float dewInside;
-float dewOutside;
-
-int rainAnalog;
+//Variables
+float humInside;  //Humidity Inside
+float tempInside; //Temperature Inside
+float humOutside;  //Humidity Outside
+float tempOutside; // Temperature Outside
+float dewInside; // Dew Point Inside
+float dewOutside; // Dew Point Outside
+int rainAnalog; // Analog Value of Rain Sensor
 
 bool isSpinning = false; //servo is spinning
 bool isAutomatic = true; //automated process is running (Determined by a switch)
@@ -34,34 +35,24 @@ bool isSwitchOpen = false; // switch for closing and opening window manually
 
 void setup()
 {
-  pinMode(capteur_D, INPUT);
-  pinMode(capteur_A, INPUT);
-  Serial.begin(9600);
+  pinMode(rain_sensor_D, INPUT); // Set rain sensor D0 pin as INPUT
+  pinMode(rain_sensor_A, INPUT); // Set rain sensor A0 pin as INPUT
+  pinMode(servo_D, INPUT); // Set servo pin as INPUT
+
+  Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
+  delay(500);//Delay to let system boot
+
   dhtInside.begin();
   dhtOutside.begin();
 
-  pinMode(11, INPUT);
-
-  //myservo.write(pos); // put it before the attach() so it goes straight to that position
-  //myservo.writeMicroseconds(1300);
-
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
 
+  delay(1000);//Wait before accessing Sensor
 
-  /*
-    myservo.write(45);
-    delay(4500);
-    myservo.write(90);
-    delay(1000);
-    myservo.write(135);
-    delay(4500);
-    myservo.write(90);
-  */
 }
 
 void loop() {
   //isAutomatic=digitalRead(); //TBD
-  isAutomatic = true;
   if (isAutomatic == false) {
     //isSwitchOn=digitalRead(); //TBD
 
@@ -75,6 +66,7 @@ void loop() {
   else {
     test();
   }
+  delay(3000); //Wait 3 seconds before accessing sensor again.
 }
 
 void OpenWindow() {
@@ -91,9 +83,7 @@ void CloseWindow() {
   if (isWindowOpen == true) {
     myservo.write(180);
     delay(100);
-    while (digitalRead(11) == LOW) {
-      delay(10);
-    }
+    while (digitalRead(11) == LOW);
 
     myservo.write(90);
     isWindowOpen = false;
@@ -105,14 +95,15 @@ void CloseWindow() {
 
 void test()
 {
+  // Temperature and Humidity sensor inside
+  humInside = dhtInside.readHumidity(); // read humidity from sensor
+  tempInside = dhtInside.readTemperature(); // read temperature from sensor
+  dewInside = (tempInside - (100 - humInside) / 5); // Calculate dew point
 
-  humInside = dhtInside.readHumidity();
-  tempInside = dhtInside.readTemperature();
-  dewInside = (tempInside - (100 - humInside) / 5);
-  
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
   dewOutside = (tempOutside - (100 - humOutside) / 5);
+
   //Print temp and humidity values to serial monitor
   Serial.println("Humidity: ");
   Serial.println(humInside);
@@ -122,41 +113,45 @@ void test()
   Serial.println(tempInside);
   Serial.println(tempOutside);
   Serial.println();
-  delay(3000);
 
 
-
-  if (digitalRead(capteur_D) == LOW)
+  if (digitalRead(rain_sensor_D) == LOW)
   {
+    // it is raining
     Serial.println("Digital value : wet");
     delay(10);
   }
   else
   {
+    // it is not raining
     Serial.println("Digital value : dry");
     delay(10);
   }
-  rainAnalog = analogRead(capteur_A);
+
+  // Print rain sensor value to serial monitor
+  rainAnalog = analogRead(rain_sensor_A);
   Serial.print("Analog value : ");
   Serial.println(rainAnalog);
   Serial.println("");
-  delay(1000);
+  delay(100);
 
-
-
-
-
-  float tempMin = 18;
-  float tempMax = 24;
-  if (digitalRead(capteur_D) == HIGH) {
-    if ((tempInside >= tempMin && tempInside <= tempMax) || (tempInside < tempMin && tempOutside >= tempMin) || (tempInside > tempMax && tempOutside <= tempMax))
+  // Case Distinction
+  float tempMin = 18; // minimum healthy room temperature
+  float tempMax = 24; // maximum healthy room temperature
+  if (digitalRead(rain_sensor_D) == HIGH) {
+    if ((tempInside >= tempMin && tempInside <= tempMax) ||
+        (tempInside < tempMin && tempOutside >= tempMin) ||
+        (tempInside > tempMax && tempOutside <= tempMax)) {
+      // keeping a healthy room temperature
       if (dewOutside < 16.7 && dewOutside < dewInside)
       {
-        //OpenWindow();
+        // keeping healthy humidity levels
+        OpenWindow();
       }
+    }
   }
   else {
-    //CloseWindow();
+    CloseWindow();
   }
 
 
