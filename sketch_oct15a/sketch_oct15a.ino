@@ -1,5 +1,7 @@
 #include <DHT.h>
 #include <Servo.h>
+#include <Time.h>
+#include <TimeLib.h>
 
 // set the DHT Pins
 #define DHTPIN 7
@@ -40,6 +42,13 @@ bool isWindowOpen = false; //window is closed or open
 bool isSwitchOpen = false; // switch for closing and opening window manually
 bool isAdjustTemp = false; // system is in "Adjust preferred temperature" Mode
 
+
+/**
+ * The setup function.
+ *
+ * @param none
+ * @return void type
+ */
 void setup()
 {
   pinMode(rain_sensor_D, INPUT); // Set rain sensor D0 pin as INPUT
@@ -52,7 +61,6 @@ void setup()
   pinMode(button_temp1, INPUT_PULLUP);
   pinMode(button_temp2, INPUT_PULLUP);
 
-
   Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
   delay(500);//Delay to let system boot
 
@@ -62,13 +70,24 @@ void setup()
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
 
   delay(1000);//Wait before accessing Sensor
+
   isAutomatic = false;
   isSwitchOpen = false;
   isWindowOpen = true;
 
+  // time & date setup
+  setTime(12,0,0,1,1,20);  
 
 }
 
+/**
+ * The loop function.
+ * 
+ * Sets the path the code takes: either manual control or the automation.
+ *
+ * @param none
+ * @return void type
+ */
 void loop() {
 
   isAutomatic = (!digitalRead(switch_auto_D));
@@ -90,11 +109,60 @@ void loop() {
     else {
       test();
     }
+
     delay(1000); //Wait 3 seconds before accessing sensor again.
 
+    // date & time
+    digitalClockDisplay();
+    delay(1000);  
   }
 }
 
+/**
+ * Function which displays the current time and date in the
+ * serial monitor.
+ *
+ * @param none
+ * @return void type
+ */
+void digitalClockDisplay()
+{
+  Serial.print(hour());
+  printDigits(minute());
+  printDigits(second());
+  Serial.print(" ");
+  Serial.print(day());
+  Serial.print(" ");
+  Serial.print(month());
+  Serial.print(" ");
+  Serial.print(year());
+  Serial.println();  
+}
+
+/**
+ * Function to print digits. 
+ *
+ * @param int digits
+ * @return void type, prints in the serial monitor
+ */
+void printDigits(int digits)
+{
+  Serial.print(":");
+  if(digits < 10)
+    Serial.print('0');
+  Serial.print(digits);  
+}
+
+/**
+ * Function to open the window.
+ * 
+ * If the state of the window is "closed", the motor starts
+ * spinning for 3 seconds and then stops. Lastly, the state
+ * of the window changes to "opened".
+ *
+ * @param none
+ * @return void type
+ */
 void OpenWindow() {
   if (isWindowOpen == false) {
     myservo.write(0); // start rotating to open window full-speed
@@ -102,9 +170,19 @@ void OpenWindow() {
     myservo.write(90); //stop rotating
     isWindowOpen = true;
   }
-
 }
 
+/**
+ * Function to close the window.
+ * 
+ * If the state of the window is "opened", the motor starts
+ * spinning until the magnetic contact sensor goes on, when
+ * it stops. 
+ * Lastly, the state of the window changes to "closed".
+ *
+ * @param none
+ * @return void type
+ */
 void CloseWindow() {
   if (isWindowOpen == true) {
     myservo.write(180); // start rotating to close window full-speed
@@ -116,11 +194,19 @@ void CloseWindow() {
 
     myservo.write(90); // stop rotating
     isWindowOpen = false;
-
-
   }
 }
 
+/**
+ * Function to adjust the window.
+ * 
+ * If the swith designated for the "adjusting" mode 
+ * is on, then the current temperature can be incresed
+ * and decreased, depending on which button is pressed.
+ *
+ * @param float temp, the current temperature
+ * @return temp, the new and adjusted temperature
+ */
 float AdjustTemp(float temp){
     isAdjustTemp = (!digitalRead(switch_adjust_D));
   while(isAdjustTemp==true){
@@ -136,14 +222,22 @@ float AdjustTemp(float temp){
   }
 }
 
-
+/**
+ * Function for the automation.
+ * 
+ * Based on the values of the variables, several cases
+ * are checked. This determines the window to open or
+ * close, using the previously created functions.
+ *
+ * @param none
+ * @return void type
+ */
 void test()
 {
   // Temperature and Humidity sensor inside
   humInside = dhtInside.readHumidity(); // read humidity from sensor
   tempInside = dhtInside.readTemperature(); // read temperature from sensor
   dewInside = (tempInside - (100 - humInside) / 5); // Calculate dew point
-
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
   dewOutside = (tempOutside - (100 - humOutside) / 5);
@@ -197,8 +291,5 @@ void test()
   else {
     CloseWindow();
   }
-
-
-
 
 }
