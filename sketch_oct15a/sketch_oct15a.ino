@@ -76,7 +76,7 @@ void setup()
   isWindowOpen = true;
 
   // time & date setup
-  setTime(12,0,0,1,1,20);  
+  setTime(12, 0, 0, 1, 1, 20);  
 
 }
 
@@ -209,13 +209,13 @@ void CloseWindow() {
  */
 float AdjustTemp(float temp){
     isAdjustTemp = (!digitalRead(switch_adjust_D));
-  while(isAdjustTemp==true){
-    if(!digitalRead(button_temp1)==HIGH){
-      temp-=0.5;
+  while(isAdjustTemp == true){
+    if(!digitalRead(button_temp1) == HIGH){
+      temp -= 0.5;
       delay(500);
     }
-    if(!digitalRead(button_temp2)==HIGH){
-      temp+=0.5;
+    if(!digitalRead(button_temp2) == HIGH){
+      temp += 0.5;
       delay(500);
     }
     return temp;
