@@ -15,7 +15,7 @@ Servo myservo;
 
 const int rain_sensor_D = 4; // Rain Sensor Connection D0
 const int rain_sensor_A = A0; // Rain Sensor Connection A0
-const int servo_D = 11;
+const int servo_D = 11; 
 
 
 //Variables
@@ -71,9 +71,9 @@ void loop() {
 
 void OpenWindow() {
   if (isWindowOpen == false) {
-    myservo.write(0);
-    delay(3000);
-    myservo.write(90);
+    myservo.write(0); // start rotating to open window full-speed
+    delay(3000);// takes 3 seconds to open window
+    myservo.write(90); //stop rotating
     isWindowOpen = true;
   }
 
@@ -81,11 +81,10 @@ void OpenWindow() {
 
 void CloseWindow() {
   if (isWindowOpen == true) {
-    myservo.write(180);
+    myservo.write(180); // start rotating to close window full-speed
     delay(100);
-    while (digitalRead(11) == LOW);
-
-    myservo.write(90);
+    while (digitalRead(11) == LOW);// wait until magnetic connectors are close
+    myservo.write(90); // stop rotating
     isWindowOpen = false;
 
 
