@@ -57,7 +57,6 @@ void setup()
   pinMode(button_temp2, INPUT_PULLUP);
 
 
-
   Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
   delay(500);//Delay to let system boot
 
@@ -73,29 +72,59 @@ void setup()
 }
 
 void loop() {
-  lcd.setCursor(15, 0);
-  lcd.print("18.0C");
+  // Temperature and Humidity sensor inside
+  humInside = dhtInside.readHumidity(); // read humidity from sensor
+  tempInside = dhtInside.readTemperature(); // read temperature from sensor
+  dewInside = (tempInside - (100 - humInside) / 5); // Calculate dew point
 
+  humOutside = dhtOutside.readHumidity();
+  tempOutside = dhtOutside.readTemperature();
+  dewOutside = (tempOutside - (100 - humOutside) / 5);
+
+  // Display preffered temperature on LCD
+  lcd.setCursor(15, 0);
+  lcd.print(prefferedTemp);
+  lcd.setCursor(19, 0);
+  lcd.print("C");
+
+  // Display in and out columns for sensors
+  lcd.setCursor(8, 1);
+  lcd.print("In");
+  lcd.setCursor(15, 1);
+  lcd.print("Out");
+
+  // Display humidity
   lcd.setCursor(0, 2);
   lcd.print("Hum :");
   lcd.setCursor(8, 2);
-  lcd.print("18.0%");
+  lcd.print(humInside);
+  lcd.setCursor(12, 2);
+  lcd.print("%");
   lcd.setCursor(15, 2);
-  lcd.print("18.0%");
+  lcd.print(humOutside);
+  lcd.setCursor(19, 2);
+  lcd.print("%");
 
+  // Display temperature
   lcd.setCursor(0, 3);
   lcd.print("Temp:");
   lcd.setCursor(8, 3);
-  lcd.print("18.0C");
+  lcd.print(tempInside);
+  lcd.setCursor(12, 3);
+  lcd.print("C");
   lcd.setCursor(15, 3);
-  lcd.print("18.0C");
+  lcd.print(tempOutside);
+  lcd.setCursor(19, 3);
+  lcd.print("C");
+
+
   isAutomatic = (!digitalRead(switch_auto_D));
   isAdjustTemp = (!digitalRead(switch_adjust_D));
   if (isAdjustTemp == true) {
     prefferedTemp = AdjustTemp(prefferedTemp);
+
   }
   else {
-
     if (isAutomatic == false) {
       lcd.setCursor(0, 0);
       lcd.print("Manual Mode   ");
@@ -110,9 +139,9 @@ void loop() {
     else {
       lcd.setCursor(0, 0);
       lcd.print("Automatic Mode");
-      test();
+      function(prefferedTemp);
     }
-    delay(1000); //Wait 3 seconds before accessing sensor again.
+    delay(3000); //Wait 3 seconds before accessing sensor again.
 
   }
 }
@@ -157,27 +186,38 @@ float AdjustTemp(float temp) {
   isAdjustTemp = (!digitalRead(switch_adjust_D));
   lcd.setCursor(0, 0);
   lcd.print("Adjust Mode");
-
+  /*lcd.setCursor(0, 1);
+  lcd.print(temp);
+  lcd.setCursor(4, 1);
+  lcd.print("C");*/
   while (isAdjustTemp == true) {
-    lcd.setCursor(0, 1);
-    lcd.print(temp);
-    if (!digitalRead(button_temp1) == HIGH) {
+
+
+    if (!digitalRead(button_temp1) == HIGH && temp > 18) {
       temp -= 0.5;
+      /*lcd.setCursor(0, 1);
+        lcd.print(temp);
+        lcd.setCursor(4, 1);
+        lcd.print("C");*/
       delay(500);
+
     }
-    if (!digitalRead(button_temp2) == HIGH) {
+    if (!digitalRead(button_temp2) == HIGH && temp < 24) {
       temp += 0.5;
+      /*lcd.setCursor(0, 1);
+        lcd.print(temp);
+        lcd.setCursor(4, 1);
+        lcd.print("C");*/
       delay(500);
     }
     return temp;
   }
-
 }
 
 
-void test()
+void function(int preferredTemp)
 {
-  // Temperature and Humidity sensor inside
+
   humInside = dhtInside.readHumidity(); // read humidity from sensor
   tempInside = dhtInside.readTemperature(); // read temperature from sensor
   dewInside = (tempInside - (100 - humInside) / 5); // Calculate dew point
@@ -185,34 +225,6 @@ void test()
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
   dewOutside = (tempOutside - (100 - humOutside) / 5);
-
-  //Print temp and humidity values to serial monitor
-  Serial.println("Humidity: ");
-  Serial.println(humInside);
-  Serial.println(humOutside);
-  Serial.println();
-  Serial.println("Temp: ");
-  Serial.println(tempInside);
-  Serial.println(tempOutside);
-  Serial.println();
-
-  lcd.setCursor(15, 0);
-  lcd.print("18.0C");
-
-  lcd.setCursor(0, 2);
-  lcd.print("Hum :");
-  lcd.setCursor(8, 2);
-  lcd.print(humInside);
-  lcd.setCursor(15, 2);
-  lcd.print(humOutside);
-
-  lcd.setCursor(0, 3);
-  lcd.print("Temp:");
-  lcd.setCursor(8, 3);
-  lcd.print(tempInside);
-  lcd.setCursor(15, 3);
-  lcd.print(tempOutside);
-
 
   if (digitalRead(rain_sensor_D) == LOW)
   {
@@ -238,13 +250,16 @@ void test()
   float tempMin = 18; // minimum healthy room temperature
   float tempMax = 24; // maximum healthy room temperature
   if (digitalRead(rain_sensor_D) == HIGH) {
-    if ((tempInside >= tempMin && tempInside <= tempMax) ||
-        (tempInside < tempMin && tempOutside >= tempMin) ||
-        (tempInside > tempMax && tempOutside <= tempMax)) {
+    if (((tempInside <= preferredTemp + 2 && tempInside >= preferredTemp - 2) || //temp inside is within 2 degrees of preferred temp
+    (tempInside > prefferedTemp + 2 && tempOutside <= tempInside) || // if temp inside is more than 2 degrees higher than preferred, outside should be less 
+    (tempInside < preferredTemp - 2 && tempOutside >= tempInside)) && // if temp inside is more than 2 degrees less than preferred, outside should be more
+    
+        ((tempInside >= tempMin && tempInside <= tempMax) || // temp inside is withing healthy min and max
+        (tempInside < tempMin && tempOutside >= tempInside) || // if temp inside is less than min, outside should be more 
+        (tempInside > tempMax && tempOutside <= tempInside))) { // if temp inside is more than max, outside should be less 
       // keeping a healthy room temperature
-      if (dewOutside < 16.7 && dewOutside < dewInside)
-      {
-        // keeping healthy humidity levels
+      if (dewOutside < 16.7 && dewOutside < dewInside)  // keeping healthy dew and humidity levels
+      {   
         OpenWindow();
       }
     }
