@@ -24,8 +24,8 @@ const int magnet_D = 4; // magnet window sensor (for closing)
 const int switch_auto_D = 5; // switch for automation
 const int switch_open_D = 6; // switch for opening/closing window in manual mode
 const int switch_adjust_D = 11; // switch to enter "Adjust Temperature" mode
-const int button_temp1 = 12; // button to decrease preffered temperature
-const int button_temp2 = 13; // button to increase preffered temperature
+const int button_temp1 = 12; // button to decrease preferred temperature
+const int button_temp2 = 13; // button to increase preferred temperature
 
 //Variables
 float humInside;  //Humidity Inside
@@ -36,13 +36,16 @@ float dewInside; // Dew Point Inside
 float dewOutside; // Dew Point Outside
 int rainAnalog; // Analog Value of Rain Sensor
 
-float prefferedTemp = 20; // preferred inside temperature
+float preferredTemp = 20; // preferred inside temperature
 
 bool isSpinning = false; //servo is spinning
 bool isAutomatic = true; //automated process is running (Determined by a switch)
 bool isWindowOpen = false; //window is closed or open
 bool isSwitchOpen = false; // switch for closing and opening window manually
 bool isAdjustTemp = false; // system is in "Adjust preferred temperature" Mode
+
+  float tempMin = 18; // minimum healthy room temperature
+  float tempMax = 24; // maximum healthy room temperature
 
 void setup()
 {
@@ -81,9 +84,9 @@ void loop() {
   tempOutside = dhtOutside.readTemperature();
   dewOutside = (tempOutside - (100 - humOutside) / 5);
 
-  // Display preffered temperature on LCD
+  // Display preferred temperature on LCD
   lcd.setCursor(15, 0);
-  lcd.print(prefferedTemp);
+  lcd.print(preferredTemp);
   lcd.setCursor(19, 0);
   lcd.print("C");
 
@@ -121,7 +124,7 @@ void loop() {
   isAutomatic = (!digitalRead(switch_auto_D));
   isAdjustTemp = (!digitalRead(switch_adjust_D));
   if (isAdjustTemp == true) {
-    prefferedTemp = AdjustTemp(prefferedTemp);
+    preferredTemp = AdjustTemp(preferredTemp);
 
   }
   else {
@@ -139,7 +142,7 @@ void loop() {
     else {
       lcd.setCursor(0, 0);
       lcd.print("Automatic Mode");
-      function(prefferedTemp);
+      function(preferredTemp);
     }
     delay(3000); //Wait 3 seconds before accessing sensor again.
 
@@ -184,94 +187,57 @@ void CloseWindow() {
 
 float AdjustTemp(float temp) {
   isAdjustTemp = (!digitalRead(switch_adjust_D));
+  
   lcd.setCursor(0, 0);
   lcd.print("Adjust Mode");
-  /*lcd.setCursor(0, 1);
-  lcd.print(temp);
-  lcd.setCursor(4, 1);
-  lcd.print("C");*/
+
   while (isAdjustTemp == true) {
-
-
-    if (!digitalRead(button_temp1) == HIGH && temp > 18) {
+    //wait for a button input
+    if (!digitalRead(button_temp1) == HIGH && temp > tempMin) {
+      // Decrease preferred temperature
       temp -= 0.5;
-      /*lcd.setCursor(0, 1);
-        lcd.print(temp);
-        lcd.setCursor(4, 1);
-        lcd.print("C");*/
       delay(500);
-
     }
-    if (!digitalRead(button_temp2) == HIGH && temp < 24) {
+    if (!digitalRead(button_temp2) == HIGH && temp < tempMax) {
+      // Increase preferred temperature
       temp += 0.5;
-      /*lcd.setCursor(0, 1);
-        lcd.print(temp);
-        lcd.setCursor(4, 1);
-        lcd.print("C");*/
       delay(500);
     }
-    return temp;
+    
+    return temp; // update the preferred tempearture directly
   }
 }
 
 
 void function(int preferredTemp)
 {
-
+  // Inside DHT sensor
   humInside = dhtInside.readHumidity(); // read humidity from sensor
   tempInside = dhtInside.readTemperature(); // read temperature from sensor
   dewInside = (tempInside - (100 - humInside) / 5); // Calculate dew point
 
+  // Outside DHT sensor
   humOutside = dhtOutside.readHumidity();
   tempOutside = dhtOutside.readTemperature();
   dewOutside = (tempOutside - (100 - humOutside) / 5);
 
-  if (digitalRead(rain_sensor_D) == LOW)
-  {
-    // it is raining
-    Serial.println("Digital value : wet");
-    delay(10);
-  }
-  else
-  {
-    // it is not raining
-    Serial.println("Digital value : dry");
-    delay(10);
-  }
-
-  // Print rain sensor value to serial monitor
-  rainAnalog = analogRead(rain_sensor_A);
-  Serial.print("Analog value : ");
-  Serial.println(rainAnalog);
-  Serial.println("");
-  delay(100);
-
   // Case Distinction
-  float tempMin = 18; // minimum healthy room temperature
-  float tempMax = 24; // maximum healthy room temperature
-  if (digitalRead(rain_sensor_D) == HIGH) {
+  if (digitalRead(rain_sensor_D) == HIGH) { // it is not raining
     if (((tempInside <= preferredTemp + 2 && tempInside >= preferredTemp - 2) || //temp inside is within 2 degrees of preferred temp
-    (tempInside > prefferedTemp + 2 && tempOutside <= tempInside) || // if temp inside is more than 2 degrees higher than preferred, outside should be less 
-    (tempInside < preferredTemp - 2 && tempOutside >= tempInside)) && // if temp inside is more than 2 degrees less than preferred, outside should be more
-    
+         (tempInside > preferredTemp + 2 && tempOutside <= tempInside) || // if temp inside is more than 2 degrees higher than preferred, outside should be less
+         (tempInside < preferredTemp - 2 && tempOutside >= tempInside)) && // if temp inside is more than 2 degrees less than preferred, outside should be more
+
         ((tempInside >= tempMin && tempInside <= tempMax) || // temp inside is withing healthy min and max
-        (tempInside < tempMin && tempOutside >= tempInside) || // if temp inside is less than min, outside should be more 
-        (tempInside > tempMax && tempOutside <= tempInside))) { // if temp inside is more than max, outside should be less 
+         (tempInside < tempMin && tempOutside >= tempInside) || // if temp inside is less than min, outside should be more
+         (tempInside > tempMax && tempOutside <= tempInside))) { // if temp inside is more than max, outside should be less
       // keeping a healthy room temperature
       if (dewOutside < 16.7 && dewOutside < dewInside)  // keeping healthy dew and humidity levels
-      {   
+      {
         OpenWindow();
       }
     }
   }
   else {
     CloseWindow();
-  }
-}
-
-void ClearLine(int line) {
-  for (int i = 0; i < 20; i++) {
-    lcd.setCursor(i, line);
-    lcd.print(" ");
   }
 }
