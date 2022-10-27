@@ -40,12 +40,12 @@ float preferredTemp = 20; // preferred inside temperature
 
 bool isSpinning = false; //servo is spinning
 bool isAutomatic = true; //automated process is running (Determined by a switch)
-bool isWindowOpen = false; //window is closed or open
+bool isWindowOpen = true; //window is closed or open
 bool isSwitchOpen = false; // switch for closing and opening window manually
 bool isAdjustTemp = false; // system is in "Adjust preferred temperature" Mode
 
-  float tempMin = 18; // minimum healthy room temperature
-  float tempMax = 24; // maximum healthy room temperature
+float tempMin = 18; // minimum healthy room temperature
+float tempMax = 24; // maximum healthy room temperature
 
 void setup()
 {
@@ -66,12 +66,9 @@ void setup()
   dhtInside.begin();
   dhtOutside.begin();
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
-  delay(1000);//Wait before accessing Sensor
-
   lcd.init(); // initialize the LCD
   lcd.backlight(); // enable backlight of LCD
-
-
+  delay(1000);//Wait before accessing Sensor
 }
 
 void loop() {
@@ -120,7 +117,6 @@ void loop() {
   lcd.setCursor(19, 3);
   lcd.print("C");
 
-
   isAutomatic = (!digitalRead(switch_auto_D));
   isAdjustTemp = (!digitalRead(switch_adjust_D));
   if (isAdjustTemp == true) {
@@ -131,6 +127,7 @@ void loop() {
     if (isAutomatic == false) {
       lcd.setCursor(0, 0);
       lcd.print("Manual Mode   ");
+
       isSwitchOpen = (!digitalRead(switch_open_D));
       if (isSwitchOpen == true) {
         OpenWindow();
@@ -139,9 +136,11 @@ void loop() {
         CloseWindow();
       }
     }
+
     else {
       lcd.setCursor(0, 0);
       lcd.print("Automatic Mode");
+     
       function(preferredTemp);
     }
     delay(3000); //Wait 3 seconds before accessing sensor again.
@@ -153,9 +152,11 @@ void OpenWindow() {
   if (isWindowOpen == false) {
     lcd.setCursor(0, 1);
     lcd.print("Opening");
+
     myservo.write(0); // start rotating to open window full-speed
     delay(3000);// takes 3 seconds to open window
     myservo.write(90); //stop rotating
+
     lcd.setCursor(0, 1);
     lcd.print("       ");
 
@@ -168,17 +169,21 @@ void CloseWindow() {
   if (isWindowOpen == true) {
     lcd.setCursor(0, 1);
     lcd.print("Closing");
+
     myservo.write(180); // start rotating to close window full-speed
     delay(100);
 
     while (digitalRead(magnet_D) == HIGH) {
       delay(100); // wait until magnetic connectors are close
     }
+    myservo.write(180); // rotate until window is fully closed (13 milimeters more)
+    delay(100);
 
     myservo.write(90); // stop rotating
 
     lcd.setCursor(0, 1);
     lcd.print("       ");
+
     isWindowOpen = false;
 
 
@@ -187,9 +192,9 @@ void CloseWindow() {
 
 float AdjustTemp(float temp) {
   isAdjustTemp = (!digitalRead(switch_adjust_D));
-  
+
   lcd.setCursor(0, 0);
-  lcd.print("Adjust Mode");
+  lcd.print("Adjust Mode    ");
 
   while (isAdjustTemp == true) {
     //wait for a button input
@@ -203,7 +208,7 @@ float AdjustTemp(float temp) {
       temp += 0.5;
       delay(500);
     }
-    
+
     return temp; // update the preferred tempearture directly
   }
 }
