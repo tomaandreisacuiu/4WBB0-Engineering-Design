@@ -9,23 +9,25 @@ LiquidCrystal_I2C lcd(0x27, 20, 4);
 #define DHTPIN 7
 #define DHTPIN1 3
 
-// initialize the library with the numbers of the interface pins
+// Initialize the library with the numbers of the interface pins
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
-DHT dhtInside(DHTPIN, DHTTYPE); // Initialize DHT sensor for normal 16mhz Arduino
+DHT dhtInside(DHTPIN, DHTTYPE); // Initialize Inside DHT sensor for normal 16mhz Arduino
 DHT dhtOutside(DHTPIN1, DHTTYPE);
 
 //define servo motor
 Servo myservo;
 
 const int rain_sensor_D = 2; // Rain Sensor Connection D0
-const int rain_sensor_A = A0; // Rain Sensor Connection A0
-const int servo_D = 9; // servo motor
-const int magnet_D = 4; // magnet window sensor (for closing)
-const int switch_auto_D = 5; // switch for automation
 const int switch_open_D = 6; // switch for opening/closing window in manual mode
 const int switch_adjust_D = 11; // switch to enter "Adjust Temperature" mode
 const int button_temp1 = 12; // button to decrease preferred temperature
-const int button_temp2 = 13; // button to increase preferred temperature
+const int servo_D = 9; // Servo motor
+const int magnet_D = 4; // Magnet window sensor (for closing)
+const int switch_auto_D = 5; // Switch for automation
+const int switch_open_D = 6; // Switch for opening/closing window in manual mode
+const int switch_adjust_D = 11; // Switch to enter "Adjust Temperature" mode
+const int button_temp1 = 12; // Button to decrease preferred temperature
+const int button_temp2 = 13; // Button to increase preferred temperature
 
 //Variables
 float humInside;  //Humidity Inside
@@ -36,24 +38,24 @@ float dewInside; // Dew Point Inside
 float dewOutside; // Dew Point Outside
 int rainAnalog; // Analog Value of Rain Sensor
 
-float preferredTemp = 20; // preferred inside temperature
+float preferredTemp = 20; // Preferred inside temperature
 
-bool isSpinning = false; //servo is spinning
-bool isAutomatic = true; //automated process is running (Determined by a switch)
-bool isWindowOpen = true; //window is closed or open
-bool isSwitchOpen = false; // switch for closing and opening window manually
-bool isAdjustTemp = false; // system is in "Adjust preferred temperature" Mode
+bool isSpinning = false; // Servo is spinning
+bool isAutomatic = true; // Automated process is running (Determined by a switch)
+bool isWindowOpen = true; // Window is closed or open
+bool isSwitchOpen = false; // Switch for closing and opening window manually
+bool isAdjustTemp = false; // System is in "Adjust preferred temperature" Mode
 
-float tempMin = 18; // minimum healthy room temperature
-float tempMax = 24; // maximum healthy room temperature
+float tempMin = 18; // Minimum healthy room temperature
+float tempMax = 24; // Maximum healthy room temperature
 
 void setup()
 {
-  pinMode(rain_sensor_D, INPUT); // Set rain sensor D0 pin as INPUT
-  pinMode(rain_sensor_A, INPUT); // Set rain sensor A0 pin as INPUT
-  pinMode(servo_D, INPUT); // Set servo pin as INPUT
+  // Set INPUT pins
+  pinMode(rain_sensor_D, INPUT);
+  pinMode(servo_D, INPUT); 
   pinMode(magnet_D, INPUT_PULLUP);
-  pinMode(switch_auto_D, INPUT_PULLUP);
+  pinMode(switch_auto_D, INPUT_PULLUP); 
   pinMode(switch_open_D, INPUT_PULLUP);
   pinMode(switch_adjust_D, INPUT_PULLUP);
   pinMode(button_temp1, INPUT_PULLUP);
@@ -63,8 +65,8 @@ void setup()
   Serial.begin(9600); // opens serial port, sets data rate to 9600 bps
   delay(500);//Delay to let system boot
 
-  dhtInside.begin();
-  dhtOutside.begin();
+  dhtInside.begin(); // Initialize inside temperature and humidity sensor
+  dhtOutside.begin(); // Initialize outside temperature and humidity sensor
   myservo.attach(9);  // attaches the servo on pin 9 to the servo object
   lcd.init(); // initialize the LCD
   lcd.backlight(); // enable backlight of LCD
@@ -73,8 +75,8 @@ void setup()
 
 void loop() {
   // Temperature and Humidity sensor inside
-  humInside = dhtInside.readHumidity(); // read humidity from sensor
-  tempInside = dhtInside.readTemperature(); // read temperature from sensor
+  humInside = dhtInside.readHumidity(); // Read humidity from sensor
+  tempInside = dhtInside.readTemperature(); // Read temperature from sensor
   dewInside = (tempInside - (100 - humInside) / 5); // Calculate dew point
 
   humOutside = dhtOutside.readHumidity();
